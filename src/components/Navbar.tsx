@@ -11,6 +11,7 @@ interface NavbarProps {
 
 const Navbar = ({ onSearchClick }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,16 +22,24 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const navLinks = [
+    { name: 'Home', href: '/' },
+    { name: 'TV Shows', href: '/tv' },
+    { name: 'Movies', href: '/movies' },
+    { name: 'New & Popular', href: '/new' },
+    { name: 'My List', href: '/watchlist' },
+  ];
+
   return (
     <nav 
-      className={`fixed top-0 z-50 w-full px-4 py-4 transition-all duration-500 lg:px-12 ${
+      className={`fixed top-0 z-50 w-full px-4 py-3 transition-all duration-500 lg:px-12 ${
         isScrolled ? 'bg-[#141414] shadow-md' : 'bg-gradient-to-b from-black/80 to-transparent'
       }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4 lg:gap-10">
           <Link href="/" className="flex items-center transition-transform hover:scale-105 active:scale-95">
-            <svg viewBox="0 0 500 500" className="h-12 w-auto lg:h-16" aria-label="Netflix Clone">
+            <svg viewBox="0 0 500 500" className="h-8 w-auto lg:h-16" aria-label="Netflix Clone">
               <defs>
                 <linearGradient id="leftLeg" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#ff0a16" />
@@ -63,12 +72,43 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
               </g>
             </svg>
           </Link>
+
+          {/* Mobile Menu Toggle */}
+          <div className="relative lg:hidden">
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="flex items-center gap-1 text-xs font-bold text-white"
+            >
+              Browse <span className={cn("transition-transform", isMobileMenuOpen && "rotate-180")}>▼</span>
+            </button>
+            {isMobileMenuOpen && (
+              <div className="absolute left-[-50px] top-full mt-4 w-64 bg-black/95 border-t-2 border-white py-4 shadow-2xl">
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 border-8 border-transparent border-b-white" />
+                <ul className="flex flex-col items-center gap-4 text-sm">
+                  {navLinks.map((link) => (
+                    <li key={link.name}>
+                      <Link 
+                        href={link.href} 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-gray-300 hover:text-white transition"
+                      >
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
           <ul className="hidden items-center gap-4 text-sm font-medium lg:flex">
-            <li><Link href="/" className="text-white transition-colors hover:text-gray-300">Home</Link></li>
-            <li><Link href="/tv" className="text-gray-300 transition-colors hover:text-white">TV Shows</Link></li>
-            <li><Link href="/movies" className="text-gray-300 transition-colors hover:text-white">Movies</Link></li>
-            <li><Link href="/new" className="text-gray-300 transition-colors hover:text-white">New & Popular</Link></li>
-            <li><Link href="/watchlist" className="text-gray-300 transition-colors hover:text-white">My List</Link></li>
+            {navLinks.map((link) => (
+              <li key={link.name}>
+                <Link href={link.href} className="text-gray-300 transition-colors hover:text-white">
+                  {link.name}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
