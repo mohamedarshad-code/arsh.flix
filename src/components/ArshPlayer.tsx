@@ -198,10 +198,16 @@ const ArshPlayer = ({ source: initialSource, sources = [], title, onBack, movieI
     } else {
       video.src = currentSource.src;
       video.onloadeddata = () => setIsLoading(false);
-      video.play().catch((err) => {
-        console.warn("Autoplay blocked or playback error:", err);
-        setIsPlaying(false);
-        setIsLoading(false);
+      video.play().then(() => {
+        setIsPlaying(true);
+      }).catch((err) => {
+        console.warn("Autoplay blocked, attempting muted autoplay:", err);
+        video.muted = true;
+        setIsMuted(true);
+        video.play().catch((err2) => {
+          console.warn("Muted autoplay also blocked:", err2);
+          setIsPlaying(false);
+        });
       });
     }
 
@@ -241,9 +247,17 @@ const ArshPlayer = ({ source: initialSource, sources = [], title, onBack, movieI
 
   const togglePlay = () => {
     if (!videoRef.current) return;
-    if (isPlaying) videoRef.current.pause();
-    else videoRef.current.play();
-    setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      videoRef.current.play();
+      setIsPlaying(true);
+      // Try to enter fullscreen on first play if on mobile
+      if (isMobile && !document.fullscreenElement) {
+        toggleFullScreen();
+      }
+    }
   };
 
   const toggleMute = () => {
@@ -276,12 +290,28 @@ const ArshPlayer = ({ source: initialSource, sources = [], title, onBack, movieI
 
   const toggleFullScreen = () => {
     if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen();
-      setIsFullScreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullScreen(false);
+    try {
+      if (!document.fullscreenElement) {
+        if (containerRef.current.requestFullscreen) {
+          containerRef.current.requestFullscreen();
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          (containerRef.current as any).webkitRequestFullscreen();
+        } else if ((containerRef.current as any).mozRequestFullScreen) {
+          (containerRef.current as any).mozRequestFullScreen();
+        } else if ((containerRef.current as any).msRequestFullscreen) {
+          (containerRef.current as any).msRequestFullscreen();
+        }
+        setIsFullScreen(true);
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        }
+        setIsFullScreen(false);
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
     }
   };
 
